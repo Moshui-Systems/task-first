@@ -63,11 +63,22 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,12">
-            <TextBlock Text="TaskFirst" FontSize="22" FontWeight="Bold"/>
-            <TextBlock Text="  do the work before the distraction" Foreground="{StaticResource FgDim}"
-                       VerticalAlignment="Bottom" Margin="8,0,0,3"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="TaskFirst" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="  do the work before the distraction" Foreground="{StaticResource FgDim}"
+                           VerticalAlignment="Bottom" Margin="8,0,0,3"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Border x:Name="ProBadge" CornerRadius="10" Padding="10,3" Margin="0,0,8,0"
+                        Background="{StaticResource Panel}">
+                    <TextBlock x:Name="ProBadgeText" Text="FREE" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource FgDim}"/>
+                </Border>
+                <Button x:Name="UpgradeBtn" Content="Upgrade to Pro" Click="OnUpgrade"
+                        Background="{StaticResource Accent}" Foreground="White" FontWeight="SemiBold"/>
+            </StackPanel>
+        </Grid>
 
         <!-- Left: rules list -->
         <Border Grid.Row="1" Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="10"
@@ -101,7 +112,7 @@
                 <StackPanel x:Name="EditorPanel" IsEnabled="False">
                     <TextBlock Text="Rule name" Style="{StaticResource Label}"/>
                     <TextBox x:Name="NameBox"/>
-                    <CheckBox x:Name="EnabledBox" Content="Rule enabled"/>
+                    <CheckBox x:Name="EnabledBox" Content="Rule enabled" Click="OnRuleEnabledToggled"/>
 
                     <TextBlock Text="App / process names to block (one per line, e.g. chrome, steam)"
                                Style="{StaticResource Label}"/>
@@ -146,6 +157,35 @@
                     </StackPanel>
                     <TextBlock x:Name="TestResult" Text="" Margin="0,10,0,0" TextWrapping="Wrap"
                                Foreground="{StaticResource FgDim}"/>
+
+                    <Border Height="1" Background="#3A3D4A" Margin="0,16,0,4"/>
+                    <Grid Margin="0,8,0,0">
+                        <TextBlock Text="SCHEDULE" FontSize="11" Foreground="{StaticResource Accent}"/>
+                        <TextBlock x:Name="SchedProTag" Text="PRO" FontSize="10" FontWeight="Bold"
+                                   HorizontalAlignment="Right" Foreground="#C9A24B"/>
+                    </Grid>
+                    <StackPanel x:Name="SchedulePanel">
+                        <CheckBox x:Name="SchedEnabledBox" Content="Only block during these hours/days"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <CheckBox x:Name="DaySu" Content="Su" Margin="0,0,8,0"/>
+                            <CheckBox x:Name="DayMo" Content="Mo" Margin="0,0,8,0"/>
+                            <CheckBox x:Name="DayTu" Content="Tu" Margin="0,0,8,0"/>
+                            <CheckBox x:Name="DayWe" Content="We" Margin="0,0,8,0"/>
+                            <CheckBox x:Name="DayTh" Content="Th" Margin="0,0,8,0"/>
+                            <CheckBox x:Name="DayFr" Content="Fr" Margin="0,0,8,0"/>
+                            <CheckBox x:Name="DaySa" Content="Sa"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="From" VerticalAlignment="Center" Margin="0,0,6,0"
+                                       Foreground="{StaticResource FgDim}"/>
+                            <TextBox x:Name="StartTimeBox" Text="09:00" Width="64"/>
+                            <TextBlock Text="to" VerticalAlignment="Center" Margin="8,0,6,0"
+                                       Foreground="{StaticResource FgDim}"/>
+                            <TextBox x:Name="EndTimeBox" Text="17:00" Width="64"/>
+                            <TextBlock Text="(24h, overnight ranges ok)" VerticalAlignment="Center"
+                                       Margin="8,0,0,0" FontSize="10" Foreground="{StaticResource FgDim}"/>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Border>
@@ -157,6 +197,10 @@
                           Margin="0,0,16,0" Click="OnToggleMaster"/>
                 <CheckBox x:Name="StartupBox" Content="Start with Windows" VerticalAlignment="Center"
                           Margin="0,0,16,0" Click="OnToggleStartup"/>
+                <CheckBox x:Name="TamperBox" Content="🔒 Tamper-lock" VerticalAlignment="Center"
+                          Margin="0,0,4,0" Click="OnToggleTamper"
+                          ToolTip="Pro: require a password to disable blocking or quit."/>
+                <Button Content="Set password" Click="OnSetTamperPassword" Padding="8,4" Margin="0,0,16,0"/>
                 <Button Content="Show Pomodoro" Click="OnShowPomodoro"/>
                 <Button Content="Re-check Anki" Click="OnRecheck"/>
             </StackPanel>

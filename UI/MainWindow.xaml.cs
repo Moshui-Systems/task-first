@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using TaskFirst.Anki;
+using TaskFirst.Licensing;
 using TaskFirst.Models;
+using TaskFirst.Security;
 using TaskFirst.Services;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
@@ -26,8 +28,10 @@ public partial class MainWindow : Window
 
         MasterBlockBox.IsChecked = App.Instance.Config.BlockingEnabled;
         StartupBox.IsChecked = StartupManager.IsEnabled();
+        TamperBox.IsChecked = App.Instance.Config.TamperLockEnabled;
 
         if (_rules.Count > 0) RulesList.SelectedIndex = 0;
+        RefreshProState();
         UpdateStatus();
     }
 
@@ -37,12 +41,37 @@ public partial class MainWindow : Window
         UpdateStatus();
     }
 
+    /// <summary>Reflect the current license tier in the UI (badge, gated controls).</summary>
+    public void RefreshProState()
+    {
+        bool pro = App.Instance.License.IsPro;
+
+        ProBadgeText.Text = pro ? "PRO" : "FREE";
+        ProBadgeText.Foreground = pro
+            ? (System.Windows.Media.Brush)FindResource("AccentGreen")
+            : (System.Windows.Media.Brush)FindResource("FgDim");
+        UpgradeBtn.Visibility = pro ? Visibility.Collapsed : Visibility.Visible;
+
+        // Schedules are Pro-only.
+        SchedulePanel.IsEnabled = pro;
+        SchedProTag.Visibility = pro ? Visibility.Collapsed : Visibility.Visible;
+
+        UpdateStatus();
+    }
+
     private void UpdateStatus()
     {
+        int enabled = _rules.Count(r => r.Enabled);
+        bool pro = App.Instance.License.IsPro;
+        string cap = (!pro && enabled > Entitlements.FreeMaxRules)
+            ? $" (Free enforces {Entitlements.FreeMaxRules})"
+            : "";
         StatusText.Text = App.Instance.Config.BlockingEnabled
-            ? $"Blocking ON · {_rules.Count(r => r.Enabled)} active rule(s)"
+            ? $"Blocking ON · {enabled} enabled rule(s){cap}"
             : "Blocking OFF";
     }
+
+    private int EnabledRuleCount() => _rules.Count(r => r.Enabled);
 
     // ---------- Rule list ----------
 
@@ -58,7 +87,9 @@ public partial class MainWindow : Window
     private void OnAddRule(object sender, RoutedEventArgs e)
     {
         if (_current is not null) ApplyEditorTo(_current);
-        var rule = new BlockRule { Name = "New rule", ProcessPatterns = { } };
+        // On Free, new rules past the cap start disabled so the cap is obvious.
+        bool startEnabled = App.Instance.License.IsPro || EnabledRuleCount() < Entitlements.FreeMaxRules;
+        var rule = new BlockRule { Name = "New rule", Enabled = startEnabled };
         _rules.Add(rule);
         RulesList.SelectedItem = rule;
     }
@@ -95,6 +126,19 @@ public partial class MainWindow : Window
         ClearedBox.IsChecked = rule.Gate.RequireDeckCleared;
         UrlBox.Text = rule.Gate.AnkiConnectUrl;
         TestResult.Text = "";
+
+        var s = rule.Schedule;
+        SchedEnabledBox.IsChecked = s.Enabled;
+        DaySu.IsChecked = s.Days.ElementAtOrDefault(0);
+        DayMo.IsChecked = s.Days.ElementAtOrDefault(1);
+        DayTu.IsChecked = s.Days.ElementAtOrDefault(2);
+        DayWe.IsChecked = s.Days.ElementAtOrDefault(3);
+        DayTh.IsChecked = s.Days.ElementAtOrDefault(4);
+        DayFr.IsChecked = s.Days.ElementAtOrDefault(5);
+        DaySa.IsChecked = s.Days.ElementAtOrDefault(6);
+        StartTimeBox.Text = MinutesToHhmm(s.StartMinutes);
+        EndTimeBox.Text = MinutesToHhmm(s.EndMinutes);
+
         _loading = false;
     }
 
@@ -112,7 +156,27 @@ public partial class MainWindow : Window
         rule.Gate.AnkiConnectUrl = string.IsNullOrWhiteSpace(UrlBox.Text)
             ? "http://127.0.0.1:8765" : UrlBox.Text.Trim();
 
+        var s = rule.Schedule;
+        s.Enabled = SchedEnabledBox.IsChecked == true;
+        s.Days = new[]
+        {
+            DaySu.IsChecked == true, DayMo.IsChecked == true, DayTu.IsChecked == true,
+            DayWe.IsChecked == true, DayTh.IsChecked == true, DayFr.IsChecked == true,
+            DaySa.IsChecked == true,
+        };
+        s.StartMinutes = HhmmToMinutes(StartTimeBox.Text, s.StartMinutes);
+        s.EndMinutes = HhmmToMinutes(EndTimeBox.Text, s.EndMinutes);
+
         RulesList.Items.Refresh();
+    }
+
+    private static string MinutesToHhmm(int m) => $"{m / 60:00}:{m % 60:00}";
+
+    private static int HhmmToMinutes(string text, int fallback)
+    {
+        if (TimeSpan.TryParse((text ?? "").Trim(), out var ts) && ts < TimeSpan.FromDays(1))
+            return (int)ts.TotalMinutes;
+        return fallback;
     }
 
     private static List<string> SplitLines(string text) =>
@@ -170,10 +234,111 @@ public partial class MainWindow : Window
         }
     }
 
+    // ---------- Pro gating ----------
+
+    private void OnUpgrade(object sender, RoutedEventArgs e)
+    {
+        App.Instance.ShowActivation();
+        RefreshProState();
+    }
+
+    private void OnRuleEnabledToggled(object sender, RoutedEventArgs e)
+    {
+        // Free tier: block enabling more than the cap of rules.
+        if (EnabledBox.IsChecked == true && !App.Instance.License.IsPro
+            && EnabledRuleCountExcludingCurrent() >= Entitlements.FreeMaxRules)
+        {
+            EnabledBox.IsChecked = false;
+            PromptUpgrade($"Free tier allows {Entitlements.FreeMaxRules} active rules. Upgrade to Pro for unlimited rules?");
+        }
+        UpdateStatus();
+    }
+
+    private int EnabledRuleCountExcludingCurrent()
+        => _rules.Count(r => r.Enabled && !ReferenceEquals(r, _current));
+
+    private void PromptUpgrade(string message)
+    {
+        if (MessageBox.Show(message, "TaskFirst Pro", MessageBoxButton.YesNo, MessageBoxImage.Information)
+            == MessageBoxResult.Yes)
+        {
+            App.Instance.ShowActivation();
+            RefreshProState();
+        }
+    }
+
+    private void OnToggleTamper(object sender, RoutedEventArgs e)
+    {
+        var cfg = App.Instance.Config;
+
+        if (TamperBox.IsChecked == true)
+        {
+            if (!App.Instance.License.IsPro)
+            {
+                TamperBox.IsChecked = false;
+                PromptUpgrade("The tamper-lock is a Pro feature. Upgrade to Pro?");
+                return;
+            }
+            if (string.IsNullOrEmpty(cfg.TamperPasswordHash) && !SetTamperPassword())
+            {
+                TamperBox.IsChecked = false;
+                return;
+            }
+            cfg.TamperLockEnabled = true;
+        }
+        else
+        {
+            // Turning the lock off is itself a protected action.
+            if (!App.Instance.ConfirmTamperUnlock())
+            {
+                TamperBox.IsChecked = true;
+                return;
+            }
+            cfg.TamperLockEnabled = false;
+        }
+        App.Instance.SaveConfig();
+    }
+
+    private void OnSetTamperPassword(object sender, RoutedEventArgs e)
+    {
+        if (!App.Instance.License.IsPro)
+        {
+            PromptUpgrade("Setting a tamper-lock password is a Pro feature. Upgrade to Pro?");
+            return;
+        }
+        // Changing an existing password requires the current one.
+        if (!string.IsNullOrEmpty(App.Instance.Config.TamperPasswordHash)
+            && !App.Instance.ConfirmTamperUnlock())
+            return;
+        SetTamperPassword();
+    }
+
+    private bool SetTamperPassword()
+    {
+        var pwd = PasswordDialog.AskNew("Set a tamper-lock password:");
+        if (pwd is null) return false;
+        var confirm = PasswordDialog.AskNew("Confirm the password:");
+        if (confirm is null) return false;
+        if (pwd != confirm)
+        {
+            MessageBox.Show("Passwords didn't match.", "TaskFirst");
+            return false;
+        }
+        App.Instance.Config.TamperPasswordHash = PasswordHasher.Hash(pwd);
+        App.Instance.SaveConfig();
+        StatusText.Text = "Tamper-lock password set ✓";
+        return true;
+    }
+
     // ---------- Bottom bar ----------
 
     private void OnToggleMaster(object sender, RoutedEventArgs e)
-        => App.Instance.SetBlocking(MasterBlockBox.IsChecked == true);
+    {
+        bool want = MasterBlockBox.IsChecked == true;
+        bool applied = App.Instance.SetBlocking(want);
+        if (!applied) MasterBlockBox.IsChecked = !want;   // tamper-lock refused; revert the checkbox
+        UpdateStatus();
+    }
 
     private void OnToggleStartup(object sender, RoutedEventArgs e)
     {

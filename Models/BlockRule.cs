@@ -25,4 +25,7 @@ public sealed class BlockRule
     public List<string> TitlePatterns { get; set; } = new();
 
     public AnkiGateConfig Gate { get; set; } = new();
+
+    /// <summary>PRO: restrict the hours/days this rule is active. Disabled = always active.</summary>
+    public RuleSchedule Schedule { get; set; } = new();
 }

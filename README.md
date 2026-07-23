@@ -26,6 +26,30 @@ killing them — and can *unlock* an app only once you've earned it, starting wi
 - **System tray.** Toggle blocking, re-check Anki, show/hide the widget, quit.
 - **Start with Windows** (optional).
 
+### Free vs Pro
+
+| | Free | Pro |
+|---|---|---|
+| Minimize-not-kill blocking, Anki gate, Pomodoro | ✅ | ✅ |
+| Blocking rules | 2 | Unlimited |
+| **Schedules** — block only during set hours/days | — | ✅ |
+| **Tamper-lock** — password required to disable blocking or quit | — | ✅ |
+
+Upgrade in-app (**Upgrade to Pro** button / tray menu) by pasting a license key. Licensing is
+offline and cryptographically signed — see [MONETIZATION.md](MONETIZATION.md) for selling and
+[LicenseTool](tools/LicenseTool) for minting keys.
+
+---
+
+## Install
+
+**From a release:** download the latest `TaskFirst-vX.Y.Z-win-x64.zip` from the repo's
+[Releases](https://github.com/Moshui-Systems/task-first/releases), unzip, run `TaskFirst.exe`
+(self-contained — no .NET install needed). Releases are built automatically by GitHub Actions when
+a `vX.Y.Z` tag is pushed.
+
+**From source:** see below.
+
 ---
 
 ## Requirements

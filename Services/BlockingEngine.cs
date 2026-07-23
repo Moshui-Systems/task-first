@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Windows.Threading;
 using TaskFirst.Anki;
+using TaskFirst.Licensing;
 using TaskFirst.Models;
 using TaskFirst.Native;
 
@@ -33,6 +34,10 @@ public sealed class BlockingEngine : IDisposable
     public event Action<BlockRule, GateResult>? GateRefreshed;
 
     public bool IsRunning { get; private set; }
+
+    /// <summary>When false, only the first <see cref="Entitlements.FreeMaxRules"/> enabled rules
+    /// are enforced and per-rule schedules are ignored.</summary>
+    public bool IsPro { get; set; }
 
     public BlockingEngine(AppConfig config)
     {
@@ -138,9 +143,19 @@ public sealed class BlockingEngine : IDisposable
 
     private BlockRule? FindMatchingRule(string processName, string title)
     {
+        int enabledSeen = 0;
+        var nowLocal = DateTime.Now;
+
         foreach (var rule in _config.Rules)
         {
             if (!rule.Enabled || rule.ProcessPatterns.Count == 0) continue;
+
+            enabledSeen++;
+            // Free tier: only the first N enabled rules are enforced.
+            if (!IsPro && enabledSeen > Entitlements.FreeMaxRules) continue;
+
+            // Pro schedules: outside the active window the rule doesn't apply.
+            if (IsPro && !rule.Schedule.IsActiveAt(nowLocal)) continue;
 
             bool procHit = rule.ProcessPatterns.Any(p =>
                 !string.IsNullOrWhiteSpace(p) &&

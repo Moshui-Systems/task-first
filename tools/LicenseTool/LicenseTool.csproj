@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TaskFirst.LicenseTool</RootNamespace>
+    <AssemblyName>licensetool</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Reuse the exact same crypto/payload the app verifies with — single source of truth. -->
+  <ItemGroup>
+    <Compile Include="..\..\Licensing\LicensePayload.cs" Link="Shared\LicensePayload.cs" />
+    <Compile Include="..\..\Licensing\LicenseToken.cs" Link="Shared\LicenseToken.cs" />
+    <Compile Include="..\..\Licensing\Entitlements.cs" Link="Shared\Entitlements.cs" />
+  </ItemGroup>
+
+</Project>

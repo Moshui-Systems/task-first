@@ -15,6 +15,12 @@ public sealed class AppConfig
 
     public bool StartWithWindows { get; set; } = false;
 
+    /// <summary>PRO: when set, disabling blocking or quitting requires this password.</summary>
+    public bool TamperLockEnabled { get; set; } = false;
+
+    /// <summary>PBKDF2 "salt.hash" of the tamper-lock password. Empty = not set.</summary>
+    public string TamperPasswordHash { get; set; } = "";
+
     public PomodoroSettings Pomodoro { get; set; } = new();
 
     /// <summary>Create a sensible starter config on first run.</summary>

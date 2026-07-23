@@ -2,3 +2,9 @@ bin/
 obj/
 publish/
 *.user
+
+# Never commit signing/private keys or license files
+*.key
+private*.txt
+.taskfirst-keys/
+secrets/

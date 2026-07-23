@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows;
+using TaskFirst.Licensing;
 using TaskFirst.Models;
 using TaskFirst.Services;
 using TaskFirst.UI;
@@ -14,6 +15,7 @@ public partial class App : System.Windows.Application
     public AppConfig Config { get; private set; } = null!;
     public BlockingEngine Engine { get; private set; } = null!;
     public PomodoroController Pomodoro { get; private set; } = null!;
+    public LicenseService License { get; private set; } = null!;
 
     private Forms.NotifyIcon _tray = null!;
     private Forms.ToolStripMenuItem _blockingItem = null!;
@@ -26,7 +28,9 @@ public partial class App : System.Windows.Application
 
         Config = ConfigStore.Load();
 
-        Engine = new BlockingEngine(Config);
+        License = new LicenseService();
+
+        Engine = new BlockingEngine(Config) { IsPro = License.IsPro };
         Engine.Acted += OnEngineActed;
         if (Config.BlockingEnabled) Engine.Start();
 
@@ -49,6 +53,7 @@ public partial class App : System.Windows.Application
         var menu = new Forms.ContextMenuStrip();
 
         menu.Items.Add(new Forms.ToolStripMenuItem("Settings…", null, (_, _) => ShowMain()));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Upgrade to Pro…", null, (_, _) => ShowActivation()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Show / hide Pomodoro", null, (_, _) => TogglePomodoro()));
 
         _blockingItem = new Forms.ToolStripMenuItem("Blocking enabled", null, (_, _) => ToggleBlocking())
@@ -138,19 +143,43 @@ public partial class App : System.Windows.Application
             ShowPomodoro();
     }
 
-    public void ToggleBlocking()
+    public void ShowActivation()
     {
-        Config.BlockingEnabled = !Config.BlockingEnabled;
-        _blockingItem.Checked = Config.BlockingEnabled;
-        if (Config.BlockingEnabled) Engine.Start(); else Engine.Stop();
-        ConfigStore.Save(Config);
-        _main?.RefreshBlockingState();
+        var w = new ActivationWindow();
+        if (_main is { IsVisible: true }) w.Owner = _main;
+        w.ShowDialog();
     }
 
-    public void SetBlocking(bool enabled)
+    /// <summary>Pro tamper-lock is active (a password is set and the license is Pro).</summary>
+    public bool IsTamperProtected =>
+        Config.TamperLockEnabled &&
+        !string.IsNullOrEmpty(Config.TamperPasswordHash) &&
+        License.IsPro;
+
+    /// <summary>Returns true if the user is allowed to proceed with a protected action.</summary>
+    public bool ConfirmTamperUnlock() =>
+        !IsTamperProtected || PasswordDialog.Challenge(Config.TamperPasswordHash);
+
+    public void ToggleBlocking() => SetBlocking(!Config.BlockingEnabled);
+
+    /// <summary>Returns false if the change was blocked by the tamper-lock (user cancelled/failed).</summary>
+    public bool SetBlocking(bool enabled)
     {
-        if (Config.BlockingEnabled == enabled) return;
-        ToggleBlocking();
+        if (Config.BlockingEnabled == enabled) return true;
+        if (!enabled && !ConfirmTamperUnlock()) return false;   // disabling requires the password
+
+        Config.BlockingEnabled = enabled;
+        _blockingItem.Checked = enabled;
+        if (enabled) Engine.Start(); else Engine.Stop();
+        ConfigStore.Save(Config);
+        _main?.RefreshBlockingState();
+        return true;
+    }
+
+    public void OnLicenseChanged()
+    {
+        Engine.IsPro = License.IsPro;
+        _main?.RefreshProState();
     }
 
     public void SaveConfig()
@@ -163,6 +192,9 @@ public partial class App : System.Windows.Application
 
     private void ExitApp()
     {
+        // Quitting is a way to defeat blocking, so it's gated by the tamper-lock too.
+        if (!ConfirmTamperUnlock()) return;
+
         try
         {
             Config.Pomodoro.ShowOnStartup = _pomodoroWindow is { IsVisible: true };
