@@ -13,7 +13,7 @@ public sealed class AppConfig
     /// <summary>Master switch: is blocking currently active?</summary>
     public bool BlockingEnabled { get; set; } = true;
 
-    public bool StartWithWindows { get; set; } = false;
+    public bool StartWithWindows { get; set; } = true;
 
     /// <summary>PRO: when set, disabling blocking or quitting requires this password.</summary>
     public bool TamperLockEnabled { get; set; } = false;

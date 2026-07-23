@@ -66,9 +66,10 @@ public partial class MainWindow : Window
         string cap = (!pro && enabled > Entitlements.FreeMaxRules)
             ? $" (Free enforces {Entitlements.FreeMaxRules})"
             : "";
-        StatusText.Text = App.Instance.Config.BlockingEnabled
+        string admin = AdminHelper.IsElevated() ? " · admin" : " · not admin";
+        StatusText.Text = (App.Instance.Config.BlockingEnabled
             ? $"Blocking ON · {enabled} enabled rule(s){cap}"
-            : "Blocking OFF";
+            : "Blocking OFF") + admin;
     }
 
     private int EnabledRuleCount() => _rules.Count(r => r.Enabled);
@@ -342,16 +343,31 @@ public partial class MainWindow : Window
 
     private void OnToggleStartup(object sender, RoutedEventArgs e)
     {
-        try
+        bool want = StartupBox.IsChecked == true;
+
+        if (want && !AdminHelper.IsElevated())
         {
-            StartupManager.SetEnabled(StartupBox.IsChecked == true);
-            App.Instance.Config.StartWithWindows = StartupBox.IsChecked == true;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Couldn't update startup setting: {ex.Message}");
+            if (MessageBox.Show(
+                    "Elevated auto-start needs administrator rights. Restart TaskFirst as administrator now?",
+                    "TaskFirst", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                App.Instance.RestartAsAdmin();
             StartupBox.IsChecked = StartupManager.IsEnabled();
+            return;
         }
+
+        bool ok = StartupManager.SetEnabled(want);
+        if (!ok)
+        {
+            MessageBox.Show(want
+                ? "Couldn't create the startup task."
+                : "Couldn't remove the startup task.", "TaskFirst");
+            StartupBox.IsChecked = StartupManager.IsEnabled();
+            return;
+        }
+
+        App.Instance.Config.StartWithWindows = want;
+        App.Instance.SaveConfig();
+        UpdateStatus();
     }
 
     private void OnShowPomodoro(object sender, RoutedEventArgs e) => App.Instance.ShowPomodoro();

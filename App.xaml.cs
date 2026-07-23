@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Windows;
 using TaskFirst.Licensing;
 using TaskFirst.Models;
+using TaskFirst.Security;
 using TaskFirst.Services;
 using TaskFirst.UI;
 using Forms = System.Windows.Forms;
@@ -26,7 +27,26 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        // Install/remove the elevated startup task and exit (used by install.ps1 / uninstall.ps1).
+        if (e.Args.Any(a => a.Equals("--install", StringComparison.OrdinalIgnoreCase)))
+        {
+            StartupManager.SetEnabled(true);
+            Shutdown();
+            return;
+        }
+        if (e.Args.Any(a => a.Equals("--uninstall", StringComparison.OrdinalIgnoreCase)))
+        {
+            StartupManager.SetEnabled(false);
+            Shutdown();
+            return;
+        }
+
         Config = ConfigStore.Load();
+
+        // "Start with Windows" is on by default. We run elevated, so we can create the highest-
+        // privilege logon task ourselves the first time — no separate installer needed.
+        if (Config.StartWithWindows && AdminHelper.IsElevated() && !StartupManager.IsEnabled())
+            StartupManager.SetEnabled(true);
 
         License = new LicenseService();
 
@@ -84,7 +104,7 @@ public partial class App : System.Windows.Application
         {
             Icon = MakeTrayIcon(),
             Visible = true,
-            Text = "TaskFirst",
+            Text = AdminHelper.IsElevated() ? "TaskFirst (admin)" : "TaskFirst",
             ContextMenuStrip = menu,
         };
         _tray.DoubleClick += (_, _) => ShowMain();
@@ -193,6 +213,14 @@ public partial class App : System.Windows.Application
     {
         Engine.IsPro = License.IsPro;
         _main?.RefreshProState();
+    }
+
+    /// <summary>Relaunch elevated (for the rare case the app is running non-elevated).</summary>
+    public void RestartAsAdmin()
+    {
+        if (!AdminHelper.RelaunchAsAdmin("--tray")) return;
+        try { _tray.Visible = false; Engine.Dispose(); } catch { /* ignore */ }
+        Shutdown();
     }
 
     public void SaveConfig()

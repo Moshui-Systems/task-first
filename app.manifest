@@ -5,9 +5,11 @@
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
-        <!-- asInvoker: run as normal user. Note: this app cannot minimize windows
-             owned by processes running elevated (admin) unless it is also elevated. -->
-        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+        <!-- requireAdministrator: TaskFirst runs elevated so it can minimize windows owned by
+             admin processes and is harder to kill from a normal-rights Task Manager. The startup
+             Scheduled Task uses "highest privileges", so login is prompt-free; manual launches
+             show the normal UAC prompt (expected for an always-admin app). -->
+        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

@@ -1,35 +1,60 @@
 using System.Diagnostics;
-using Microsoft.Win32;
 
 namespace TaskFirst.Services;
 
-/// <summary>Manages the "start with Windows" entry via the per-user Run registry key.</summary>
+/// <summary>
+/// Manages "start with Windows" via a Scheduled Task that runs at logon with highest privileges.
+/// A task (not the Run registry key) is used so the elevated app can start at login WITHOUT a UAC
+/// prompt every time. Creating a highest-privilege task requires the app to be running elevated.
+/// </summary>
 public static class StartupManager
 {
-    private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "TaskFirst";
+    public const string TaskName = "TaskFirst";
 
-    public static bool IsEnabled()
+    public static string ExePath => Process.GetCurrentProcess().MainModule?.FileName ?? "";
+
+    public static bool IsEnabled() => RunSchtasks("/Query", "/TN", TaskName) == 0;
+
+    public static bool SetEnabled(bool enabled) => enabled ? Install() : Remove();
+
+    public static bool Install()
     {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: false);
-        return key?.GetValue(ValueName) is not null;
+        var exe = ExePath;
+        if (string.IsNullOrEmpty(exe)) return false;
+
+        // /TR value is the command the task runs. Inner-quote the path so spaces are safe.
+        string tr = $"\"{exe}\" --tray";
+        return RunSchtasks(
+            "/Create", "/TN", TaskName,
+            "/TR", tr,
+            "/SC", "ONLOGON",
+            "/RL", "HIGHEST",
+            "/F") == 0;
     }
 
-    public static void SetEnabled(bool enabled)
-    {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true)
-                        ?? Registry.CurrentUser.CreateSubKey(RunKey);
-        if (key is null) return;
+    public static bool Remove() => RunSchtasks("/Delete", "/TN", TaskName, "/F") == 0;
 
-        if (enabled)
+    private static int RunSchtasks(params string[] args)
+    {
+        try
         {
-            var exe = Process.GetCurrentProcess().MainModule?.FileName;
-            if (!string.IsNullOrEmpty(exe))
-                key.SetValue(ValueName, $"\"{exe}\" --tray");
+            var psi = new ProcessStartInfo("schtasks.exe")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            foreach (var a in args) psi.ArgumentList.Add(a);
+
+            using var p = Process.Start(psi);
+            if (p is null) return -1;
+            p.WaitForExit(8000);
+            return p.HasExited ? p.ExitCode : -1;
         }
-        else if (key.GetValue(ValueName) is not null)
+        catch
         {
-            key.DeleteValue(ValueName, throwOnMissingValue: false);
+            return -1;
         }
     }
 }

@@ -62,10 +62,25 @@ offline and cryptographically signed — see [MONETIZATION.md](MONETIZATION.md) 
 
 ## Install
 
+**Recommended (auto-start as admin):** from a checkout of this repo, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+It self-elevates (one UAC prompt), builds a self-contained exe, installs it to
+`%LOCALAPPDATA%\Programs\TaskFirst`, adds a Start-Menu shortcut, and registers a **Scheduled Task**
+that launches TaskFirst **at every logon with administrator rights — no per-login UAC prompt**.
+Remove it any time with `.\uninstall.ps1` (your settings are kept). 
+
+> **Runs as administrator by default.** TaskFirst requests elevation so it can minimize windows
+> owned by other admin apps and resist being killed from a normal-rights Task Manager. Launching it
+> manually shows the normal UAC prompt; the logon Scheduled Task starts it elevated silently.
+
 **From a release:** download the latest `TaskFirst-vX.Y.Z-win-x64.zip` from the repo's
 [Releases](https://github.com/Moshui-Systems/task-first/releases), unzip, run `TaskFirst.exe`
-(self-contained — no .NET install needed). Releases are built automatically by GitHub Actions when
-a `vX.Y.Z` tag is pushed.
+(self-contained — no .NET install needed). To enable elevated auto-start, run it once and tick
+**Start with Windows (admin)**, or run `TaskFirst.exe --install` from an admin prompt.
 
 **From source:** see below.
 
