@@ -16,8 +16,11 @@ public static class Entitlements
     public const string PublicKeyBase64 =
         "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMDsUp1Ij9wweWbvxigd9Mvh0yQw6NSwcT+yMA2TpoxX+I32nwAtsWJXOYEOfqjzFPNn8O39SsFjt/cWx7ftvqQ==";
 
-    /// <summary>Where "Upgrade to Pro" sends the user. Set to your store checkout URL.</summary>
-    public const string BuyUrl = "https://moshui-systems.lemonsqueezy.com/buy/REPLACE_ME";
+    /// <summary>
+    /// Where "Upgrade to Pro" sends the user. Paste your Stripe Payment Link here
+    /// (Stripe Dashboard → Payment Links). It looks like https://buy.stripe.com/xxxxxxxx.
+    /// </summary>
+    public const string BuyUrl = "https://buy.stripe.com/REPLACE_ME";
 
     /// <summary>Free tier is capped to this many enabled rules; Pro is unlimited.</summary>
     public const int FreeMaxRules = 2;

@@ -53,30 +53,40 @@ click **Activate**. Verify any key with:
 dotnet run --project tools/LicenseTool -- verify <key>
 ```
 
-## Taking payments — recommended: Lemon Squeezy or Paddle
+## Taking payments — Stripe (chosen) with manual fulfilment
 
-Both are **merchants of record**, meaning they collect and remit VAT/sales tax for you — a big deal
-for a solo dev selling worldwide. (Gumroad is the simplest but you handle more; Stripe is cheapest
-but you own tax compliance.)
+Plan: **Stripe Payment Link + manual key delivery** to launch today, automate later.
 
-### Fastest launch (manual fulfilment)
-1. Create a product on **Lemon Squeezy**, price it, get the checkout URL → put it in `BuyUrl`.
-2. When you get the "new order" email, run `issue <buyer-email>` and send the key. Lemon Squeezy
-   lets you customize the order-confirmation email, so you can paste the key there.
+### Launch checklist (manual fulfilment)
+1. **Stripe Dashboard → Product catalog → Add product**: "TaskFirst Pro", one-time price (e.g. $19).
+2. **Payment Links → New link** for that price. A Payment Link **collects the buyer's email by
+   default** — that's the email you'll bind the key to. Copy the `https://buy.stripe.com/…` URL.
+3. Paste it into `Licensing/Entitlements.cs` → `BuyUrl`, rebuild/release.
+4. Turn on a notification for new payments (Stripe app or the "successful payment" email).
+5. **On each sale:** grab the buyer's email from the payment, then mint and send the key:
+   ```powershell
+   dotnet run --project tools/LicenseTool -- issue buyer@example.com `
+       --key-file "$env:USERPROFILE\.taskfirst-keys\private.key"
+   ```
+   Email them the key (a saved template works fine). Buyer pastes it into **Upgrade to Pro**.
 
-### Automated fulfilment (recommended once you have volume)
-Host a tiny webhook that holds the private key and mints on purchase:
-1. Deploy a serverless function (Cloudflare Workers / Vercel / a small Azure Function). Port the
-   `LicenseToken.Sign` logic (≈40 lines) or shell out to `licensetool`.
-2. Store the private key as a secret env var in that platform (never in the repo).
-3. Point the store's **`order_created`** webhook at it. On each order, mint a key for the buyer's
-   email and email it back (Resend/SendGrid) or return it via the store's license-key field.
+> Tip: keep a simple spreadsheet (date, email, license id) so support/refunds are easy. The
+> `issue` command prints a `License id` for exactly this.
 
-### Alternative: use the store's own license keys
-Lemon Squeezy and Gumroad can generate & validate their own keys via an API. If you prefer that,
-add a `LemonSqueezyVerifier` alongside the current offline verifier and call their
-`/v1/licenses/validate` endpoint (online check, cache the result). The offline signed-key path
-stays as the fallback / enterprise option.
+### Tax note
+Stripe is **not** a merchant of record — you're responsible for tax. Turn on **Stripe Tax** so it
+calculates VAT/sales tax at checkout, and understand your registration thresholds. (If that
+overhead ever outweighs the lower fees, Lemon Squeezy/Paddle act as merchant of record and remit
+tax for you — the app's `BuyUrl` is the only thing that would change.)
+
+### Automating later (when volume justifies it)
+Replace the manual step with a webhook that holds the private key and mints on purchase:
+1. Deploy a serverless function (Cloudflare Workers / Vercel / Azure Function). Port
+   `LicenseToken.Sign` (≈40 lines) or shell out to `licensetool`.
+2. Store the private key as a secret env var there (never in the repo).
+3. Point Stripe's **`checkout.session.completed`** webhook at it; mint a key for
+   `session.customer_details.email` and email it (Resend/SendGrid). Verify the Stripe
+   webhook signature before minting.
 
 ## Anti-piracy note
 
