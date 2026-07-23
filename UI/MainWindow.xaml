@@ -1,0 +1,171 @@
+<Window x:Class="TaskFirst.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TaskFirst.UI"
+        Title="TaskFirst — Settings"
+        Height="640" Width="900"
+        MinHeight="520" MinWidth="760"
+        Background="{StaticResource Bg}"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource FgDim}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin" Value="0,10,0,3"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource Panel}"/>
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="BorderBrush" Value="#3A3D4A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Fg}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#3A3D4A"/>
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="TaskFirst" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="  do the work before the distraction" Foreground="{StaticResource FgDim}"
+                       VerticalAlignment="Bottom" Margin="8,0,0,3"/>
+        </StackPanel>
+
+        <!-- Left: rules list -->
+        <Border Grid.Row="1" Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="10"
+                Padding="10" Margin="0,0,12,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="RULES" FontSize="11"
+                           Foreground="{StaticResource FgDim}" Margin="2,0,0,8"/>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="+ Add" Click="OnAddRule"/>
+                    <Button Content="Delete" Click="OnDeleteRule" Background="#4A2A2A"/>
+                </StackPanel>
+                <ListBox x:Name="RulesList" Background="Transparent" BorderThickness="0"
+                         Foreground="{StaticResource Fg}"
+                         SelectionChanged="OnRuleSelected">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="●" Margin="0,0,6,0"
+                                           Foreground="{Binding Enabled, Converter={x:Static local:BoolDotConverter.Instance}}"/>
+                                <TextBlock Text="{Binding Name}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- Right: editor -->
+        <Border Grid.Row="1" Grid.Column="1" Background="{StaticResource Panel}" CornerRadius="10" Padding="16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="EditorPanel" IsEnabled="False">
+                    <TextBlock Text="Rule name" Style="{StaticResource Label}"/>
+                    <TextBox x:Name="NameBox"/>
+                    <CheckBox x:Name="EnabledBox" Content="Rule enabled"/>
+
+                    <TextBlock Text="App / process names to block (one per line, e.g. chrome, steam)"
+                               Style="{StaticResource Label}"/>
+                    <TextBox x:Name="ProcBox" AcceptsReturn="True" Height="64"
+                             VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
+
+                    <TextBlock Text="Only when window title contains (optional, one per line)"
+                               Style="{StaticResource Label}"/>
+                    <TextBox x:Name="TitleBox" AcceptsReturn="True" Height="48"
+                             VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
+
+                    <Border Height="1" Background="#3A3D4A" Margin="0,16,0,4"/>
+                    <TextBlock Text="UNLOCK CONDITION (ANKI)" FontSize="11"
+                               Foreground="{StaticResource Accent}" Margin="0,8,0,0"/>
+
+                    <CheckBox x:Name="GateEnabledBox" Content="Unlock this app when Anki goal is met (uncheck = hard block)"/>
+
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Deck (blank = all decks)" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="DeckBox" IsEditable="True"
+                                      Background="{StaticResource Panel}" Foreground="Black"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Min cards today" Style="{StaticResource Label}"/>
+                            <TextBox x:Name="MinCardsBox" Text="100"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox x:Name="ClearedBox" Content="Also require the deck to be fully cleared (0 due)"/>
+
+                    <TextBlock Text="AnkiConnect URL" Style="{StaticResource Label}"/>
+                    <TextBox x:Name="UrlBox" Text="http://127.0.0.1:8765"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="Load decks from Anki" Click="OnLoadDecks"/>
+                        <Button Content="Test now" Click="OnTestGate" Background="{StaticResource Accent}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="TestResult" Text="" Margin="0,10,0,0" TextWrapping="Wrap"
+                               Foreground="{StaticResource FgDim}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Bottom bar -->
+        <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <CheckBox x:Name="MasterBlockBox" Content="Blocking active" VerticalAlignment="Center"
+                          Margin="0,0,16,0" Click="OnToggleMaster"/>
+                <CheckBox x:Name="StartupBox" Content="Start with Windows" VerticalAlignment="Center"
+                          Margin="0,0,16,0" Click="OnToggleStartup"/>
+                <Button Content="Show Pomodoro" Click="OnShowPomodoro"/>
+                <Button Content="Re-check Anki" Click="OnRecheck"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock x:Name="StatusText" VerticalAlignment="Center" Margin="0,0,12,0"
+                           Foreground="{StaticResource FgDim}"/>
+                <Button Content="Save" Click="OnSave" Background="{StaticResource AccentGreen}"
+                        Foreground="#10240F" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
