@@ -44,6 +44,19 @@ public partial class App : System.Windows.Application
         bool startInTray = e.Args.Any(a => a.Equals("--tray", StringComparison.OrdinalIgnoreCase));
         if (!startInTray)
             ShowMain();
+
+        // Background: honour the revocation list without blocking startup.
+        _ = RecheckLicenseAsync();
+    }
+
+    private async Task RecheckLicenseAsync()
+    {
+        await License.RefreshAsync();
+        if (!License.IsPro)
+        {
+            Engine.IsPro = false;
+            _main?.RefreshProState();
+        }
     }
 
     // ---------- Tray ----------

@@ -60,5 +60,8 @@
             <Button Content="Buy a license →" Click="OnBuy" Background="{StaticResource Accent}"
                     Foreground="White"/>
         </StackPanel>
+
+        <TextBlock x:Name="DeviceText" Text="" Margin="0,14,0,0" FontSize="10"
+                   Foreground="{StaticResource FgDim}"/>
     </StackPanel>
 </Window>

@@ -1,0 +1,22 @@
+name = "taskfirst-licensing"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Create with:  wrangler kv namespace create KV
+# then paste the printed id here.
+kv_namespaces = [
+  { binding = "KV", id = "REPLACE_WITH_KV_ID" }
+]
+
+[vars]
+ACTIVATION_LIMIT = "3"
+EMAIL_FROM = "TaskFirst <keys@yourdomain.com>"
+PRODUCT_NAME = "TaskFirst Pro"
+PRODUCT_ID = "taskfirst"
+
+# Secrets are NOT stored here. Set them with:
+#   wrangler secret put STRIPE_WEBHOOK_SECRET
+#   wrangler secret put PRIVATE_KEY
+#   wrangler secret put PUBLIC_KEY
+#   wrangler secret put RESEND_API_KEY
+#   wrangler secret put ADMIN_TOKEN

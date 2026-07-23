@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFirst — earn your distractions</title>
+<meta name="description" content="A Windows focus blocker that minimizes distractions instead of killing them — and only unlocks apps once you've finished your Anki reviews. With a floating Pomodoro timer.">
+<style>
+  :root{
+    --bg:#15161c; --panel:#1e2029; --panel2:#252834; --line:#31343f;
+    --fg:#f2f3f7; --dim:#9aa0b4; --accent:#5b8cff; --green:#3fd07a; --gold:#e0b84b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;overflow-x:hidden}
+  body{background:var(--bg);color:var(--fg);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.55}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .btn{display:inline-block;padding:13px 22px;border-radius:10px;font-weight:600;cursor:pointer;transition:transform .08s ease,filter .15s ease}
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+  .btn-primary{background:linear-gradient(135deg,#5b8cff,#8a6bff);color:#fff}
+  .btn-ghost{background:var(--panel2);color:var(--fg);border:1px solid var(--line)}
+  .btn-gold{background:linear-gradient(135deg,#e0b84b,#d69838);color:#241c07}
+
+  header{position:sticky;top:0;z-index:10;background:rgba(21,22,28,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+  .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#5b8cff,#8a6bff);display:grid;place-items:center;font-size:16px}
+  .nav-links{display:flex;gap:26px;align-items:center;color:var(--dim);font-size:15px}
+  .nav-links a:hover{color:var(--fg)}
+  @media(max-width:640px){.nav-links{display:none}}
+
+  .hero{padding:88px 0 64px;text-align:center}
+  .pill{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--dim);font-size:13px;margin-bottom:26px}
+  h1{font-size:clamp(38px,6vw,68px);line-height:1.05;margin:0 0 18px;letter-spacing:-1.5px}
+  .grad{background:linear-gradient(120deg,#5b8cff,#8a6bff 55%,#3fd07a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(17px,2.3vw,21px);color:var(--dim);max-width:640px;margin:0 auto 34px}
+  .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .sub{margin-top:16px;color:var(--dim);font-size:13px}
+
+  .demo{margin:56px auto 0;max-width:760px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;display:grid;grid-template-columns:1fr 240px;gap:22px;text-align:left}
+  @media(max-width:680px){.demo{grid-template-columns:1fr}}
+  .win{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .win .bar{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .win .body{padding:18px;color:var(--dim);font-size:14px}
+  .flash{color:var(--green);font-weight:600}
+  .pomo{background:#12131a;border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+  .pomo .phase{color:var(--accent);font-weight:700;font-size:12px;letter-spacing:1px}
+  .pomo .time{font-size:44px;font-weight:300;margin:6px 0}
+  .pomo .track{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+  .pomo .fill{height:100%;width:62%;background:var(--accent)}
+  .pomo .meta{display:flex;justify-content:space-between;color:var(--dim);font-size:11px;margin-top:10px}
+
+  section{padding:64px 0}
+  .eyebrow{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
+  h2{font-size:clamp(28px,4vw,40px);text-align:center;margin:10px 0 8px;letter-spacing:-1px}
+  .section-lead{text-align:center;color:var(--dim);max-width:600px;margin:0 auto 44px}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px}
+  .card .ico{font-size:26px;margin-bottom:12px}
+  .card h3{margin:0 0 8px;font-size:19px}
+  .card p{margin:0;color:var(--dim);font-size:15px}
+
+  .price{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:760px;margin:0 auto}
+  @media(max-width:680px){.price{grid-template-columns:1fr}}
+  .plan{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px}
+  .plan.pro{border-color:#5b8cff;box-shadow:0 0 0 1px #5b8cff33,0 20px 60px -30px #5b8cff88;position:relative}
+  .plan .tag{position:absolute;top:-12px;right:22px;background:linear-gradient(135deg,#5b8cff,#8a6bff);padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700}
+  .plan h3{margin:0;font-size:20px}
+  .amount{font-size:42px;font-weight:700;margin:10px 0 2px}
+  .amount span{font-size:16px;color:var(--dim);font-weight:400}
+  .plan ul{list-style:none;padding:0;margin:20px 0 26px}
+  .plan li{padding:7px 0;color:var(--dim);display:flex;gap:10px}
+  .plan li::before{content:"✓";color:var(--green);font-weight:700}
+  .plan .btn{width:100%;text-align:center}
+
+  .steps{max-width:720px;margin:0 auto;display:grid;gap:16px}
+  .step{display:flex;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 24px}
+  .step .n{flex:none;width:34px;height:34px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--accent)}
+  .step h4{margin:0 0 4px}
+  .step p{margin:0;color:var(--dim);font-size:15px}
+
+  footer{border-top:1px solid var(--line);padding:36px 0;color:var(--dim);font-size:14px}
+  .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap"><nav>
+    <a class="logo" href="#top"><span class="mark">✓</span> TaskFirst</a>
+    <div class="nav-links">
+      <a href="#why">Why</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://github.com/Moshui-Systems/task-first">GitHub</a>
+    </div>
+  </nav></div>
+</header>
+
+<a id="top"></a>
+<div class="hero wrap">
+  <span class="pill">Windows · minimize-not-kill blocking · Anki-gated</span>
+  <h1>Earn your <span class="grad">distractions.</span></h1>
+  <p class="lead">TaskFirst is a focus blocker that doesn't close your apps — it just quietly
+    <em>minimizes</em> them. Games and social media stay locked until you've finished your Anki
+    reviews. Do the work first.</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://github.com/Moshui-Systems/task-first/releases/latest">Download free</a>
+    <a class="btn btn-gold" href="https://buy.stripe.com/REPLACE_ME">Upgrade to Pro — $19</a>
+  </div>
+  <div class="sub">Free forever for up to 2 rules · Windows 10/11 · no account required</div>
+
+  <div class="demo">
+    <div class="win">
+      <div class="bar"><span class="dot" style="background:#ff6b6b"></span><span class="dot" style="background:#e0b84b"></span><span class="dot" style="background:#3fd07a"></span></div>
+      <div class="body">
+        You open <strong>Steam</strong>…<br><br>
+        TaskFirst checks Anki → <span style="color:#ff6b6b">34 / 100 cards done</span><br>
+        → window slides back to the taskbar.<br><br>
+        Finish your deck, and it opens like normal. <span class="flash">Unlocked ✓</span>
+      </div>
+    </div>
+    <div class="pomo">
+      <div class="phase">FOCUS</div>
+      <div class="time">15:32</div>
+      <div class="track"><div class="fill"></div></div>
+      <div class="meta"><span>Sessions: 3</span><span>Anki: 34 today</span></div>
+    </div>
+  </div>
+</div>
+
+<section id="why">
+  <div class="wrap">
+    <div class="eyebrow">Why it's different</div>
+    <h2>Friction, not a cage</h2>
+    <p class="section-lead">Most blockers nuke your apps or lock you out. TaskFirst is gentler and
+      smarter — it nudges, and it ties your fun to work you actually chose.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🪟</div><h3>Minimizes, never kills</h3>
+        <p>Blocked apps aren't closed — their window just gets pushed back down. No lost work, no killed processes.</p></div>
+      <div class="card"><div class="ico">🧠</div><h3>Anki unlock gate</h3>
+        <p>"Unlock Steam only after 100 cards in my deck." TaskFirst reads your live review count from Anki and unlocks automatically.</p></div>
+      <div class="card"><div class="ico">🍅</div><h3>Floating Pomodoro</h3>
+        <p>An always-on-top, draggable work/break timer with your live Anki count baked in.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="background:var(--panel)">
+  <div class="wrap">
+    <div class="eyebrow">Features</div>
+    <h2>Everything you need to stay on task</h2>
+    <div class="grid" style="margin-top:40px">
+      <div class="card" style="background:var(--panel2)"><div class="ico">⏰</div><h3>Schedules</h3><p>Block only during work hours or study blocks — including overnight ranges. <em>(Pro)</em></p></div>
+      <div class="card" style="background:var(--panel2)"><div class="ico">🔒</div><h3>Tamper-lock</h3><p>Require a password to disable blocking or quit — commit to your own rules. <em>(Pro)</em></p></div>
+      <div class="card" style="background:var(--panel2)"><div class="ico">🎯</div><h3>Title matching</h3><p>Block <code>youtube.com</code> in your browser while leaving everything else alone.</p></div>
+      <div class="card" style="background:var(--panel2)"><div class="ico">🚀</div><h3>Starts with Windows</h3><p>Runs quietly in the system tray from the moment you log in.</p></div>
+      <div class="card" style="background:var(--panel2)"><div class="ico">🔑</div><h3>Offline licensing</h3><p>Signed keys verified on-device. Works without a constant connection.</p></div>
+      <div class="card" style="background:var(--panel2)"><div class="ico">♾️</div><h3>Unlimited rules</h3><p>Block as many apps and sites as you like. <em>(Pro — Free covers 2)</em></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="eyebrow">Pricing</div>
+    <h2>Simple. One-time.</h2>
+    <p class="section-lead">Start free. Upgrade once, own it forever.</p>
+    <div class="price">
+      <div class="plan">
+        <h3>Free</h3>
+        <div class="amount">$0</div>
+        <ul>
+          <li>Minimize-not-kill blocking</li>
+          <li>Anki unlock gate</li>
+          <li>Floating Pomodoro</li>
+          <li>Up to 2 rules</li>
+        </ul>
+        <a class="btn btn-ghost" href="https://github.com/Moshui-Systems/task-first/releases/latest">Download</a>
+      </div>
+      <div class="plan pro">
+        <span class="tag">PRO</span>
+        <h3>Pro</h3>
+        <div class="amount">$19 <span>one-time</span></div>
+        <ul>
+          <li>Everything in Free</li>
+          <li>Unlimited rules</li>
+          <li>Schedules (hours & days)</li>
+          <li>Tamper-lock password</li>
+          <li>Priority support</li>
+        </ul>
+        <a class="btn btn-gold" href="https://buy.stripe.com/REPLACE_ME">Buy Pro</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how" style="background:var(--panel)">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>Set it up in two minutes</h2>
+    <div class="steps" style="margin-top:40px">
+      <div class="step"><div class="n">1</div><div><h4>Install the AnkiConnect add-on</h4><p>One-time: paste code <code>2055492159</code> into Anki's add-on installer. (Optional — blocking works without it.)</p></div></div>
+      <div class="step"><div class="n">2</div><div><h4>Add a rule</h4><p>Name the apps to block (e.g. <code>steam</code>, <code>chrome</code>) and set your goal: "100 cards in my deck".</p></div></div>
+      <div class="step"><div class="n">3</div><div><h4>Do the work</h4><p>Blocked apps bounce to the taskbar until your Anki goal is met — then they open normally.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>© <span id="yr"></span> Moshui Systems · TaskFirst</div>
+    <div><a href="https://github.com/Moshui-Systems/task-first">GitHub</a> · <a href="https://github.com/Moshui-Systems/task-first/releases">Releases</a></div>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>

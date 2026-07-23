@@ -17,6 +17,8 @@ public partial class ActivationWindow : Window
     public ActivationWindow()
     {
         InitializeComponent();
+        DeviceText.Text = $"Device ID: {TaskFirst.Security.MachineId.Current}"
+            + (Entitlements.ApiConfigured ? "  ·  online activation enabled" : "  ·  offline mode");
         RenderStatus();
     }
 
@@ -36,15 +38,26 @@ public partial class ActivationWindow : Window
             Message.Text = _license.LastMessage;
     }
 
-    private void OnActivate(object sender, RoutedEventArgs e)
+    private async void OnActivate(object sender, RoutedEventArgs e)
     {
-        var (ok, message) = _license.Activate(KeyBox.Text);
-        Message.Text = message;
-        Message.Foreground = new SolidColorBrush(ok
-            ? Color.FromRgb(0x3F, 0xD0, 0x7A)
-            : Color.FromRgb(0xFF, 0x6B, 0x6B));
-        RenderStatus();
-        App.Instance.OnLicenseChanged();
+        var btn = (System.Windows.Controls.Button)sender;
+        btn.IsEnabled = false;
+        Message.Text = "Activating…";
+        Message.Foreground = new SolidColorBrush(Color.FromRgb(0x9A, 0xA0, 0xB4));
+        try
+        {
+            var (ok, message) = await _license.ActivateAsync(KeyBox.Text);
+            Message.Text = message;
+            Message.Foreground = new SolidColorBrush(ok
+                ? Color.FromRgb(0x3F, 0xD0, 0x7A)
+                : Color.FromRgb(0xFF, 0x6B, 0x6B));
+            RenderStatus();
+            App.Instance.OnLicenseChanged();
+        }
+        finally
+        {
+            btn.IsEnabled = true;
+        }
     }
 
     private void OnDeactivate(object sender, RoutedEventArgs e)

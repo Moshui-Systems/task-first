@@ -34,7 +34,8 @@ public static class LicenseToken
         var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payload, Json);
         using var ec = ECDsa.Create();
         ec.ImportPkcs8PrivateKey(Convert.FromBase64String(privateKeyBase64), out _);
-        var sig = ec.SignData(payloadBytes, HashAlgorithmName.SHA256);
+        // IEEE-P1363 (raw r||s) so tokens interoperate with Web Crypto in the Cloudflare Worker.
+        var sig = ec.SignData(payloadBytes, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
         return B64Url(payloadBytes) + "." + B64Url(sig);
     }
 
@@ -64,7 +65,7 @@ public static class LicenseToken
         {
             using var ec = ECDsa.Create();
             ec.ImportSubjectPublicKeyInfo(Convert.FromBase64String(publicKeyBase64), out _);
-            if (!ec.VerifyData(payloadBytes, sig, HashAlgorithmName.SHA256))
+            if (!ec.VerifyData(payloadBytes, sig, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation))
                 return new VerifyResult(false, null, "Invalid signature — this key wasn't issued for TaskFirst.");
         }
         catch (Exception ex)

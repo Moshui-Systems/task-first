@@ -1,0 +1,6 @@
+# Copy to .dev.vars for `wrangler dev` (never commit .dev.vars — it holds secrets).
+STRIPE_WEBHOOK_SECRET=whsec_...
+PRIVATE_KEY=MIGH...              # ECDSA P-256 PKCS8, base64 (from: licensetool keygen)
+PUBLIC_KEY=MFkw...               # ECDSA P-256 SPKI, base64 (same one embedded in the app)
+RESEND_API_KEY=re_...
+ADMIN_TOKEN=some-long-random-string

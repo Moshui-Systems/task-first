@@ -1,4 +1,23 @@
-# TaskFirst
+<h1 align="center">TaskFirst</h1>
+
+<p align="center"><strong>Earn your distractions.</strong> A Windows focus blocker that
+<em>minimizes</em> distractions instead of killing them — and only unlocks apps once you've
+finished your Anki reviews. With a floating Pomodoro timer.</p>
+
+<p align="center">
+  <a href="https://github.com/Moshui-Systems/task-first/actions/workflows/ci.yml"><img src="https://github.com/Moshui-Systems/task-first/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Moshui-Systems/task-first/releases/latest"><img src="https://img.shields.io/github/v/release/Moshui-Systems/task-first?display_name=tag" alt="Release"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-0a7bbb" alt="Windows">
+  <img src="https://img.shields.io/badge/.NET-8.0-512bd4" alt=".NET 8">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Moshui-Systems/task-first/releases/latest"><b>⬇ Download</b></a> ·
+  <a href="https://moshui-systems.github.io/task-first/"><b>🌐 Website</b></a> ·
+  <a href="MONETIZATION.md"><b>💳 Sell it</b></a>
+</p>
+
+---
 
 A distraction blocker for Windows that **minimizes** the windows of blocked apps instead of
 killing them — and can *unlock* an app only once you've earned it, starting with **Anki**

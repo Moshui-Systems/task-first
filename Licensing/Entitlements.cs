@@ -22,6 +22,16 @@ public static class Entitlements
     /// </summary>
     public const string BuyUrl = "https://buy.stripe.com/REPLACE_ME";
 
+    /// <summary>
+    /// Base URL of the licensing Worker (activation + revocation). Leave as the REPLACE
+    /// placeholder to run fully offline — the app then skips machine-binding/revocation and
+    /// trusts the signed key alone. Set to e.g. https://taskfirst-licensing.you.workers.dev
+    /// </summary>
+    public const string LicensingApiBase = "https://REPLACE_ME.workers.dev";
+
+    public static bool ApiConfigured =>
+        !string.IsNullOrWhiteSpace(LicensingApiBase) && !LicensingApiBase.Contains("REPLACE");
+
     /// <summary>Free tier is capped to this many enabled rules; Pro is unlimited.</summary>
     public const int FreeMaxRules = 2;
 
