@@ -84,6 +84,14 @@
 
   footer{border-top:1px solid var(--line);padding:36px 0;color:var(--dim);font-size:14px}
   .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes fillpulse{0%{width:22%}100%{width:82%}}
+  @keyframes glow{0%,100%{opacity:.55}50%{opacity:1}}
+  .pomo{animation:float 5s ease-in-out infinite}
+  .pomo .fill{animation:fillpulse 9s ease-in-out infinite alternate}
+  .flash{animation:glow 2.2s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){.pomo,.pomo .fill,.flash{animation:none}}
 </style>
 </head>
 <body>
@@ -108,9 +116,10 @@
     reviews. Do the work first.</p>
   <div class="cta">
     <a class="btn btn-primary" href="https://github.com/Moshui-Systems/task-first/releases/latest">Download free</a>
-    <a class="btn btn-gold" href="https://buy.stripe.com/REPLACE_ME">Upgrade to Pro — $19</a>
+    <a class="btn btn-ghost" href="#pricing">See Pro — $19</a>
   </div>
   <div class="sub">Free forever for up to 2 rules · Windows 10/11 · no account required</div>
+  <div class="sub" style="margin-top:8px">First run: Windows SmartScreen may warn — click <b>More info → Run anyway</b>, then approve the admin prompt.</div>
 
   <div class="demo">
     <div class="win">
@@ -191,7 +200,8 @@
           <li>Tamper-lock password</li>
           <li>Priority support</li>
         </ul>
-        <a class="btn btn-gold" href="https://buy.stripe.com/REPLACE_ME">Buy Pro</a>
+        <a class="btn btn-gold" href="https://github.com/Moshui-Systems/task-first" style="opacity:.6;pointer-events:none">Coming soon</a>
+        <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--dim)">Pro launches shortly — <a href="https://github.com/Moshui-Systems/task-first" style="color:var(--accent)">watch the repo</a> for the drop.</div>
       </div>
     </div>
   </div>
