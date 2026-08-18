@@ -1,6 +1,7 @@
 bin/
 obj/
 publish/
+publish-v*/
 *.user
 
 # Never commit signing/private keys or license files

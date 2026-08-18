@@ -47,8 +47,10 @@ public sealed class AnkiGate
     /// <summary>Always hits AnkiConnect. Used by the "Test / Re-check" buttons.</summary>
     public async Task<GateResult> EvaluateFreshAsync(AnkiGateConfig gate, CancellationToken ct = default)
     {
-        // A gate that is disabled or has no requirement is a hard block: never unlocks.
-        if (!gate.Enabled || !gate.HasAnyRequirement)
+        // This result is composed with other integrations by the blocking engine.
+        if (!gate.HasAnkiRequirement)
+            return new GateResult(true, 0, 0, "No Anki goal set.");
+        if (!gate.Enabled)
             return new GateResult(false, 0, 0, "Hard block — no unlock condition set.");
 
         var client = new AnkiConnectClient(gate.AnkiConnectUrl);

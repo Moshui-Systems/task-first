@@ -1,8 +1,7 @@
 <h1 align="center">TaskFirst</h1>
 
-<p align="center"><strong>Earn your distractions.</strong> A Windows focus blocker that
-<em>minimizes</em> distractions instead of killing them — and only unlocks apps once you've
-finished your Anki reviews. With a floating Pomodoro timer.</p>
+<p align="center"><strong>Turn progress into access.</strong> A flexible goal gate for Windows that
+<em>minimizes</em> selected apps until your own combination of goals is complete.</p>
 
 <p align="center">
   <a href="https://github.com/Moshui-Systems/task-first/actions/workflows/ci.yml"><img src="https://github.com/Moshui-Systems/task-first/actions/workflows/ci.yml/badge.svg" alt="CI"></a>

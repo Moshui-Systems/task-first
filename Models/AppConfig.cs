@@ -32,7 +32,7 @@ public sealed class AppConfig
             {
                 new BlockRule
                 {
-                    Name = "Games — do 100 cards first",
+                    Name = "Earn your game time",
                     Enabled = false,
                     ProcessPatterns = { "steam", "epicgameslauncher" },
                     Gate = new AnkiGateConfig

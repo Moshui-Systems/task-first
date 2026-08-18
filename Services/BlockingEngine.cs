@@ -21,6 +21,7 @@ public sealed class BlockingEngine : IDisposable
     private readonly WindowWatcher _watcher = new();
     private readonly DispatcherTimer _pollTimer = new();
     private readonly AnkiGate _gate;
+    private readonly Func<int> _completedPomodoros;
     private AppConfig _config;
 
     private readonly Dictionary<string, GateResult> _lastGate = new();
@@ -39,10 +40,11 @@ public sealed class BlockingEngine : IDisposable
     /// are enforced and per-rule schedules are ignored.</summary>
     public bool IsPro { get; set; }
 
-    public BlockingEngine(AppConfig config)
+    public BlockingEngine(AppConfig config, Func<int>? completedPomodoros = null)
     {
         _config = config;
         _gate = new AnkiGate(config.AnkiCacheSeconds);
+        _completedPomodoros = completedPomodoros ?? (() => 0);
         _watcher.ForegroundChanged += OnForeground;
         _pollTimer.Tick += (_, _) => _watcher.PollNow();
     }
@@ -123,7 +125,18 @@ public sealed class BlockingEngine : IDisposable
         }
         try
         {
-            var result = await _gate.EvaluateFreshAsync(rule.Gate).ConfigureAwait(true);
+            var anki = await _gate.EvaluateFreshAsync(rule.Gate).ConfigureAwait(true);
+            int completed = _completedPomodoros();
+            bool pomodoroOk = rule.Gate.RequiredPomodoros <= 0 || completed >= rule.Gate.RequiredPomodoros;
+            bool unlocked = rule.Gate.Enabled && rule.Gate.HasAnyRequirement && anki.Unlocked && pomodoroOk;
+            var parts = new List<string>();
+            if (rule.Gate.HasAnkiRequirement) parts.Add(anki.Message);
+            if (rule.Gate.RequiredPomodoros > 0)
+                parts.Add($"{completed}/{rule.Gate.RequiredPomodoros} focus sessions complete");
+            string message = !rule.Gate.Enabled || !rule.Gate.HasAnyRequirement
+                ? "Hard block — add an unlock condition or keep this rule locked."
+                : unlocked ? "All goals complete ✓" : string.Join(" · ", parts);
+            var result = new GateResult(unlocked, anki.CardsReviewedToday, anki.DueRemaining, message);
             lock (_lastGate)
             {
                 _lastGate[rule.Id] = result;

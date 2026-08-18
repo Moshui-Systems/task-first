@@ -50,11 +50,12 @@ public partial class App : System.Windows.Application
 
         License = new LicenseService();
 
-        Engine = new BlockingEngine(Config) { IsPro = License.IsPro };
+        Pomodoro = new PomodoroController(Config.Pomodoro);
+
+        Engine = new BlockingEngine(Config, () => Pomodoro.TotalWorkSessions) { IsPro = License.IsPro };
+        Pomodoro.PhaseChanged += _ => Engine.ForceRefreshAll();
         Engine.Acted += OnEngineActed;
         if (Config.BlockingEnabled) Engine.Start();
-
-        Pomodoro = new PomodoroController(Config.Pomodoro);
 
         BuildTray();
 

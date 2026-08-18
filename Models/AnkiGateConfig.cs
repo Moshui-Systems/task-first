@@ -1,8 +1,8 @@
 namespace TaskFirst.Models;
 
 /// <summary>
-/// The condition that "unlocks" a blocked app. When enabled, the app stays
-/// blocked (windows get minimized) until the Anki requirements are satisfied.
+/// Conditions that unlock a blocked app. Requirements are combined with AND.
+/// Anki is the first external integration; Pomodoro is tracked locally.
 /// </summary>
 public sealed class AnkiGateConfig
 {
@@ -20,5 +20,9 @@ public sealed class AnkiGateConfig
     /// <summary>If true, also requires the deck to have 0 cards currently due.</summary>
     public bool RequireDeckCleared { get; set; } = false;
 
-    public bool HasAnyRequirement => MinCardsReviewedToday > 0 || RequireDeckCleared;
+    /// <summary>Completed focus sessions required since TaskFirst was opened.</summary>
+    public int RequiredPomodoros { get; set; } = 0;
+
+    public bool HasAnkiRequirement => MinCardsReviewedToday > 0 || RequireDeckCleared;
+    public bool HasAnyRequirement => HasAnkiRequirement || RequiredPomodoros > 0;
 }

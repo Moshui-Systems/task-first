@@ -124,6 +124,7 @@ public partial class MainWindow : Window
         GateEnabledBox.IsChecked = rule.Gate.Enabled;
         DeckBox.Text = rule.Gate.DeckName;
         MinCardsBox.Text = rule.Gate.MinCardsReviewedToday.ToString();
+        MinPomosBox.Text = rule.Gate.RequiredPomodoros.ToString();
         ClearedBox.IsChecked = rule.Gate.RequireDeckCleared;
         UrlBox.Text = rule.Gate.AnkiConnectUrl;
         TestResult.Text = "";
@@ -153,6 +154,7 @@ public partial class MainWindow : Window
         rule.Gate.Enabled = GateEnabledBox.IsChecked == true;
         rule.Gate.DeckName = DeckBox.Text?.Trim() ?? "";
         rule.Gate.MinCardsReviewedToday = int.TryParse(MinCardsBox.Text, out var n) ? Math.Max(0, n) : 0;
+        rule.Gate.RequiredPomodoros = int.TryParse(MinPomosBox.Text, out var p) ? Math.Max(0, p) : 0;
         rule.Gate.RequireDeckCleared = ClearedBox.IsChecked == true;
         rule.Gate.AnkiConnectUrl = string.IsNullOrWhiteSpace(UrlBox.Text)
             ? "http://127.0.0.1:8765" : UrlBox.Text.Trim();
@@ -192,6 +194,7 @@ public partial class MainWindow : Window
         Enabled = GateEnabledBox.IsChecked == true,
         DeckName = DeckBox.Text?.Trim() ?? "",
         MinCardsReviewedToday = int.TryParse(MinCardsBox.Text, out var n) ? Math.Max(0, n) : 0,
+        RequiredPomodoros = int.TryParse(MinPomosBox.Text, out var p) ? Math.Max(0, p) : 0,
         RequireDeckCleared = ClearedBox.IsChecked == true,
         AnkiConnectUrl = string.IsNullOrWhiteSpace(UrlBox.Text) ? "http://127.0.0.1:8765" : UrlBox.Text.Trim(),
     };
@@ -223,9 +226,15 @@ public partial class MainWindow : Window
         TestResult.Text = "Checking…";
         try
         {
-            var result = await new AnkiGate(5).EvaluateFreshAsync(gate);
-            TestResult.Text = result.Message;
-            TestResult.Foreground = result.Unlocked
+            var anki = await new AnkiGate(5).EvaluateFreshAsync(gate);
+            int completed = App.Instance.Pomodoro.TotalWorkSessions;
+            bool pomodoroOk = gate.RequiredPomodoros <= 0 || completed >= gate.RequiredPomodoros;
+            bool unlocked = gate.Enabled && gate.HasAnyRequirement && anki.Unlocked && pomodoroOk;
+            var parts = new List<string>();
+            if (gate.HasAnkiRequirement) parts.Add(anki.Message);
+            if (gate.RequiredPomodoros > 0) parts.Add($"{completed}/{gate.RequiredPomodoros} focus sessions complete");
+            TestResult.Text = unlocked ? "All goals complete ✓" : string.Join(" · ", parts);
+            TestResult.Foreground = unlocked
                 ? (System.Windows.Media.Brush)FindResource("AccentGreen")
                 : (System.Windows.Media.Brush)FindResource("AccentRed");
         }
@@ -375,7 +384,7 @@ public partial class MainWindow : Window
     private void OnRecheck(object sender, RoutedEventArgs e)
     {
         App.Instance.Engine.ForceRefreshAll();
-        StatusText.Text = "Re-checking Anki…";
+        StatusText.Text = "Refreshing goals…";
     }
 
     private void OnSave(object sender, RoutedEventArgs e)
