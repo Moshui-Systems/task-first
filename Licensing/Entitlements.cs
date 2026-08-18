@@ -20,7 +20,7 @@ public static class Entitlements
     /// Where "Upgrade to Pro" sends the user. Paste your Stripe Payment Link here
     /// (Stripe Dashboard → Payment Links). It looks like https://buy.stripe.com/xxxxxxxx.
     /// </summary>
-    public const string BuyUrl = "https://buy.stripe.com/REPLACE_ME";
+    public const string BuyUrl = "https://buy.stripe.com/8x27sLdjc1fp4TzdZA5sA00";
 
     /// <summary>
     /// Base URL of the licensing Worker (activation + revocation). Leave as the REPLACE
